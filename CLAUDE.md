@@ -13,12 +13,13 @@ Cortex is a terminal-based multi-agent orchestration system that allows multiple
 
 ## Current Phase
 
-> **Phase 5 — TUI Interface**
-> See [docs/phase-5.md](docs/phase-5.md)
+> **Phase 6 — Multi-Agent Concurrency**
+> See [docs/phase-6.md](docs/phase-6.md)
 
 Phase 0 complete. Node 18 in use — `import.meta.dirname` unavailable, use `fileURLToPath`+`dirname` pattern.
 Phase 1 complete. `NodeJS.ErrnoException` unavailable in ESLint — use `Error & { code: string }` instead.
 Phase 3 complete. `proc.stdout`/`proc.stderr` require cast to `NonNullable<...>` when stdio is `'pipe'`.
+Phase 5 complete. TUI library: **Ink** (React-based). `src/ui/` must not import from `src/runtime/`. UI sends messages via `onSendMessage` callback from `index.ts`. State is pure data in `src/ui/state-manager.ts`. TSX support added: `tsconfig.json` `jsx: react-jsx`, `jsxImportSource: react`; `eslint.config.js` extended to `**/*.tsx`.
 
 ---
 
@@ -144,7 +145,7 @@ Do NOT implement these. DO design around them:
 | Test runner    | Vitest           |
 | Linter         | ESLint           |
 | Formatter      | Prettier         |
-| TUI            | Ink (React-based TUI) or blessed — decide in Phase 5 |
+| TUI            | Ink (React-based TUI) — chosen in Phase 5            |
 | Storage        | JSONL files      |
 | Agent config   | YAML             |
 
@@ -159,8 +160,8 @@ Do NOT implement these. DO design around them:
 | 2     | Event Bus Core              | Complete    |
 | 3     | Claude Runtime Layer        | Complete    |
 | 4     | Persistence Layer           | Complete    |
-| 5     | TUI Interface               | In Progress |
-| 6     | Multi-Agent Concurrency     | Not started |
+| 5     | TUI Interface               | Complete    |
+| 6     | Multi-Agent Concurrency     | In Progress |
 | 7     | Memory Evolution Hooks      | Not started |
 
 ---
