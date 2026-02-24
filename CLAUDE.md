@@ -13,13 +13,14 @@ Cortex is a terminal-based multi-agent orchestration system that allows multiple
 
 ## Current Phase
 
-> **Phase 6 — Multi-Agent Concurrency**
-> See [docs/phase-6.md](docs/phase-6.md)
+> **Phase 7 — Memory Evolution Hooks**
+> See [docs/phase-7.md](docs/phase-7.md)
 
 Phase 0 complete. Node 18 in use — `import.meta.dirname` unavailable, use `fileURLToPath`+`dirname` pattern.
 Phase 1 complete. `NodeJS.ErrnoException` unavailable in ESLint — use `Error & { code: string }` instead.
 Phase 3 complete. `proc.stdout`/`proc.stderr` require cast to `NonNullable<...>` when stdio is `'pipe'`.
 Phase 5 complete. TUI library: **Ink** (React-based). `src/ui/` must not import from `src/runtime/`. UI sends messages via `onSendMessage` callback from `index.ts`. State is pure data in `src/ui/state-manager.ts`. TSX support added: `tsconfig.json` `jsx: react-jsx`, `jsxImportSource: react`; `eslint.config.js` extended to `**/*.tsx`.
+Phase 6 complete. Concurrency model: one `ClaudeRunner` per agent, sharing event bus + storage (both designed for it). All runner state is instance-local (closure). `RunnerRegistry` (`src/runtime/runner-registry.ts`) wraps the per-agent Map explicitly. No module-level mutable state anywhere in runtime.
 
 ---
 
@@ -161,8 +162,8 @@ Do NOT implement these. DO design around them:
 | 3     | Claude Runtime Layer        | Complete    |
 | 4     | Persistence Layer           | Complete    |
 | 5     | TUI Interface               | Complete    |
-| 6     | Multi-Agent Concurrency     | In Progress |
-| 7     | Memory Evolution Hooks      | Not started |
+| 6     | Multi-Agent Concurrency     | Complete    |
+| 7     | Memory Evolution Hooks      | In Progress |
 
 ---
 

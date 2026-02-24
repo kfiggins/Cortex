@@ -5,6 +5,7 @@ import { getAllAgents } from './src/agents/loader.js';
 import { createEventBus } from './src/core/event-bus.js';
 import { createJsonlAdapter } from './src/storage/jsonl-adapter.js';
 import { createClaudeRunner } from './src/runtime/runner.js';
+import { createRunnerRegistry } from './src/runtime/runner-registry.js';
 import { App } from './src/ui/App.js';
 
 export async function main(): Promise<void> {
@@ -14,12 +15,13 @@ export async function main(): Promise<void> {
 
   const agents = await getAllAgents(config.agentsDir);
 
-  const runners = new Map(
-    agents.map((agent) => [agent.name, createClaudeRunner(eventBus, storage)]),
-  );
+  const registry = createRunnerRegistry();
+  for (const agent of agents) {
+    registry.registerRunner(agent.name, createClaudeRunner(eventBus, storage));
+  }
 
   function onSendMessage(agentName: string, message: string): void {
-    const runner = runners.get(agentName);
+    const runner = registry.getRunner(agentName);
     const agentConfig = agents.find((a) => a.name === agentName);
     if (!runner || !agentConfig) return;
     runner.run({ agentConfig, userMessage: message }).catch(console.error);
