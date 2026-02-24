@@ -39,7 +39,10 @@ export function createClaudeRunner(
       running = true;
 
       try {
-        const { agentConfig, userMessage, history } = input;
+        const { agentConfig, userMessage } = input;
+
+        // Load history fresh from storage every run — never rely on stale in-memory state
+        const history = await storage.loadHistory(agentConfig.name);
 
         const systemPrompt = buildSystemPrompt(agentConfig.brain, agentConfig.memory);
         const messages = buildMessages(history, userMessage);

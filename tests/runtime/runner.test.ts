@@ -37,7 +37,7 @@ describe('createClaudeRunner', () => {
     const events = collectEvents(bus);
     const runner = createClaudeRunner(bus, createNoopAdapter(), createMockSpawn(['hello']));
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
 
     expect(events[0].type).toBe('AgentStarted');
     expect(events[0].agentName).toBe('test-agent');
@@ -52,7 +52,7 @@ describe('createClaudeRunner', () => {
       createMockSpawn(['chunk-1', 'chunk-2', 'chunk-3']),
     );
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
 
     const streamEvents = events.filter((e) => e.type === 'AgentStreaming');
     expect(streamEvents).toHaveLength(3);
@@ -72,7 +72,7 @@ describe('createClaudeRunner', () => {
       createMockSpawn(['Hello ', 'world']),
     );
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
 
     const completed = events.find((e) => e.type === 'AgentCompleted');
     expect(completed).toBeDefined();
@@ -86,7 +86,7 @@ describe('createClaudeRunner', () => {
     const events = collectEvents(bus);
     const runner = createClaudeRunner(bus, createNoopAdapter(), createErrorSpawn('spawn failed'));
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
 
     const errored = events.find((e) => e.type === 'AgentErrored');
     expect(errored).toBeDefined();
@@ -100,7 +100,7 @@ describe('createClaudeRunner', () => {
     const runner = createClaudeRunner(bus, createNoopAdapter(), createErrorSpawn());
 
     await expect(
-      runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] }),
+      runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' }),
     ).resolves.toBeUndefined();
   });
 
@@ -112,7 +112,7 @@ describe('createClaudeRunner', () => {
     };
     const runner = createClaudeRunner(bus, storage, createMockSpawn(['response']));
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hello', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hello' });
 
     expect(storage.appendMessage).toHaveBeenCalledWith(
       'test-agent',
@@ -128,7 +128,7 @@ describe('createClaudeRunner', () => {
     };
     const runner = createClaudeRunner(bus, storage, createMockSpawn(['the response']));
 
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
 
     expect(storage.appendMessage).toHaveBeenCalledWith(
       'test-agent',
@@ -136,12 +136,27 @@ describe('createClaudeRunner', () => {
     );
   });
 
+  it('loads history from storage at start of each run', async () => {
+    const bus = createEventBus();
+    const storage: StorageAdapter = {
+      appendMessage: vi.fn().mockResolvedValue(undefined),
+      loadHistory: vi.fn().mockResolvedValue([
+        { role: 'user', content: 'prior message', timestamp: 1000 },
+      ]),
+    };
+    const runner = createClaudeRunner(bus, storage, createMockSpawn(['reply']));
+
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'new message' });
+
+    expect(storage.loadHistory).toHaveBeenCalledWith('test-agent');
+  });
+
   it('isRunning() returns true during run, false after completion', async () => {
     const bus = createEventBus();
     let runningDuring = false;
 
     const runner = createClaudeRunner(bus, createNoopAdapter(), async (opts) => {
-      runningDuring = true; // we're in the middle of a run at this point
+      runningDuring = true;
       opts.eventBus.emit({ type: 'AgentStarted', agentName: opts.agentName });
       opts.eventBus.emit({
         type: 'AgentCompleted',
@@ -152,7 +167,7 @@ describe('createClaudeRunner', () => {
     });
 
     expect(runner.isRunning()).toBe(false);
-    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi', history: [] });
+    await runner.run({ agentConfig: makeAgentConfig(), userMessage: 'hi' });
     expect(runningDuring).toBe(true);
     expect(runner.isRunning()).toBe(false);
   });
@@ -171,20 +186,16 @@ describe('createClaudeRunner', () => {
 
     const runner = createClaudeRunner(bus, createNoopAdapter(), slowSpawn);
 
-    // Start first run — don't await it
-    const p1 = runner.run({ agentConfig: makeAgentConfig(), userMessage: 'a', history: [] });
+    const p1 = runner.run({ agentConfig: makeAgentConfig(), userMessage: 'a' });
 
-    // Drain microtasks so the runner body executes far enough to set running = true
-    // run() does: (1) check running, (2) set running=true, (3) await storage.appendMessage
-    // After one `await Promise.resolve()`, step 3 completes and running is true
+    // Drain microtasks: (1) check running, (2) set running=true, (3) loadHistory, (4) appendMessage
+    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
 
-    // Now running = true — second call should be rejected immediately
-    const p2 = runner.run({ agentConfig: makeAgentConfig(), userMessage: 'b', history: [] });
+    const p2 = runner.run({ agentConfig: makeAgentConfig(), userMessage: 'b' });
 
-    // Resolve the first spawn so everything can finish
     resolveSpawn({ fullResponse: 'done' });
     bus.emit({ type: 'AgentStarted', agentName: 'test-agent' });
     bus.emit({ type: 'AgentCompleted', agentName: 'test-agent', payload: { fullResponse: 'done' } });
@@ -204,16 +215,8 @@ describe('createClaudeRunner', () => {
     const runnerA = createClaudeRunner(bus, createNoopAdapter(), createMockSpawn(['a']));
     const runnerB = createClaudeRunner(bus, createNoopAdapter(), createMockSpawn(['b']));
 
-    await runnerA.run({
-      agentConfig: makeAgentConfig({ name: 'agent-a' }),
-      userMessage: 'hi',
-      history: [],
-    });
-    await runnerB.run({
-      agentConfig: makeAgentConfig({ name: 'agent-b' }),
-      userMessage: 'hi',
-      history: [],
-    });
+    await runnerA.run({ agentConfig: makeAgentConfig({ name: 'agent-a' }), userMessage: 'hi' });
+    await runnerB.run({ agentConfig: makeAgentConfig({ name: 'agent-b' }), userMessage: 'hi' });
 
     expect(startedNames).toContain('agent-a');
     expect(startedNames).toContain('agent-b');

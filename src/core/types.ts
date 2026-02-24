@@ -16,7 +16,6 @@ export interface Message {
 export interface RunnerInput {
   agentConfig: AgentConfig;
   userMessage: string;
-  history: Message[];
 }
 
 /**
