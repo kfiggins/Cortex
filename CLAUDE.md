@@ -13,10 +13,11 @@ Cortex is a terminal-based multi-agent orchestration system that allows multiple
 
 ## Current Phase
 
-> **Phase 1 — Agent Configuration System**
-> See [docs/phase-1.md](docs/phase-1.md)
+> **Phase 2 — Event Bus Core**
+> See [docs/phase-2.md](docs/phase-2.md)
 
 Phase 0 complete. Node 18 in use — `import.meta.dirname` unavailable, use `fileURLToPath`+`dirname` pattern.
+Phase 1 complete. `NodeJS.ErrnoException` unavailable in ESLint — use `Error & { code: string }` instead.
 
 ---
 
@@ -153,8 +154,9 @@ Do NOT implement these. DO design around them:
 | Phase | Name                        | Status      |
 |-------|-----------------------------|-------------|
 | 0     | Project Foundation          | Complete    |
-| 1     | Agent Configuration System  | In Progress |
-| 2     | Event Bus Core              | Not started |
+| 1     | Agent Configuration System  | Complete    |
+| 2     | Event Bus Core              | In Progress |
+
 | 3     | Claude Runtime Layer        | Not started |
 | 4     | Persistence Layer           | Not started |
 | 5     | TUI Interface               | Not started |
