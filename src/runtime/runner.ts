@@ -8,6 +8,16 @@ export interface ClaudeRunner {
   isRunning(): boolean;
 }
 
+export interface MemoryHookContext {
+  agentName: string;
+  conversation: Message[];
+}
+
+export interface RunnerHooks {
+  loadMemory?: (agentName: string) => Promise<string>;
+  onMemoryHook?: (ctx: MemoryHookContext) => Promise<void>;
+}
+
 /**
  * Internal type for the spawn function so it can be swapped in tests.
  */
@@ -17,6 +27,7 @@ export function createClaudeRunner(
   eventBus: EventBus,
   storage: StorageAdapter,
   spawnFn: SpawnFn = spawnClaude,
+  hooks?: RunnerHooks,
 ): ClaudeRunner {
   let running = false;
 
@@ -27,7 +38,6 @@ export function createClaudeRunner(
 
     async run(input: RunnerInput): Promise<void> {
       if (running) {
-        // Reject concurrent runs on the same runner instance (Phase 6 will manage this)
         eventBus.emit({
           type: 'AgentErrored',
           agentName: input.agentConfig.name,
@@ -41,10 +51,16 @@ export function createClaudeRunner(
       try {
         const { agentConfig, userMessage } = input;
 
-        // Load history fresh from storage every run — never rely on stale in-memory state
+        // Reload memory fresh from disk if a loader is provided,
+        // so edits between runs are always picked up.
+        const memory = hooks?.loadMemory
+          ? await hooks.loadMemory(agentConfig.name)
+          : agentConfig.memory;
+
+        // Load history fresh from storage every run
         const history = await storage.loadHistory(agentConfig.name);
 
-        const systemPrompt = buildSystemPrompt(agentConfig.brain, agentConfig.memory);
+        const systemPrompt = buildSystemPrompt(agentConfig.brain, memory);
         const messages = buildMessages(history, userMessage);
 
         // Persist the user message before spawning
@@ -66,6 +82,14 @@ export function createClaudeRunner(
             timestamp: Date.now(),
           };
           await storage.appendMessage(agentConfig.name, assistantMsg);
+
+          // MEMORY HOOK: In V2, the system will analyze the conversation
+          // and suggest updates to memory.md here.
+          // For now, this is a no-op unless a hook is provided.
+          await hooks?.onMemoryHook?.({
+            agentName: agentConfig.name,
+            conversation: [...history, userMsg, assistantMsg],
+          });
         }
       } finally {
         running = false;

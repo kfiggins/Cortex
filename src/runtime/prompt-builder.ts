@@ -10,6 +10,8 @@ import type { Message } from '../core/types.js';
  *   ---
  *   ## Memory
  *
+ *   The following is context from previous sessions:
+ *
  *   <memory contents>    ← only if non-empty
  */
 export function buildSystemPrompt(brain: string, memory: string): string {
@@ -17,7 +19,7 @@ export function buildSystemPrompt(brain: string, memory: string): string {
   if (!trimmedMemory) {
     return brain.trim();
   }
-  return `${brain.trim()}\n\n---\n## Memory\n\n${trimmedMemory}`;
+  return `${brain.trim()}\n\n---\n## Memory\n\nThe following is context from previous sessions:\n\n${trimmedMemory}`;
 }
 
 /**

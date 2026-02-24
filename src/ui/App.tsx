@@ -18,11 +18,12 @@ interface Props {
   agents: AgentConfig[];
   eventBus: EventBus;
   onSendMessage: (agentName: string, message: string) => void;
+  onEditMemory: (agentName: string) => void;
 }
 
 type Focus = 'list' | 'input';
 
-export function App({ agents, eventBus, onSendMessage }: Props) {
+export function App({ agents, eventBus, onSendMessage, onEditMemory }: Props) {
   const { exit } = useApp();
   const [state, setState] = useState<UIState>(() => initUIState(agents));
   const [focus, setFocus] = useState<Focus>('list');
@@ -42,6 +43,11 @@ export function App({ agents, eventBus, onSendMessage }: Props) {
   useInput((input, key) => {
     if (key.ctrl && input === 'c') {
       exit();
+      return;
+    }
+
+    if (key.ctrl && input === 'm' && state.selectedAgentName) {
+      onEditMemory(state.selectedAgentName);
       return;
     }
 
