@@ -13,11 +13,12 @@ Cortex is a terminal-based multi-agent orchestration system that allows multiple
 
 ## Current Phase
 
-> **Phase 3 — Claude Runtime Layer**
-> See [docs/phase-3.md](docs/phase-3.md)
+> **Phase 4 — Persistence Layer**
+> See [docs/phase-4.md](docs/phase-4.md)
 
 Phase 0 complete. Node 18 in use — `import.meta.dirname` unavailable, use `fileURLToPath`+`dirname` pattern.
 Phase 1 complete. `NodeJS.ErrnoException` unavailable in ESLint — use `Error & { code: string }` instead.
+Phase 3 complete. `proc.stdout`/`proc.stderr` require cast to `NonNullable<...>` when stdio is `'pipe'`.
 
 ---
 
@@ -156,8 +157,9 @@ Do NOT implement these. DO design around them:
 | 0     | Project Foundation          | Complete    |
 | 1     | Agent Configuration System  | Complete    |
 | 2     | Event Bus Core              | Complete    |
-| 3     | Claude Runtime Layer        | In Progress |
-| 4     | Persistence Layer           | Not started |
+| 3     | Claude Runtime Layer        | Complete    |
+| 4     | Persistence Layer           | In Progress |
+| 4     | Persistence Layer           | In Progress |
 | 5     | TUI Interface               | Not started |
 | 6     | Multi-Agent Concurrency     | Not started |
 | 7     | Memory Evolution Hooks      | Not started |
